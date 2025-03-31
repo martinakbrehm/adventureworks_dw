@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: dim_customers 
+    description: Este modelo representa a dimensão de clientes
+    columns:
+      - name: customersk
+        description: A chave substituta do cliente
+        tests:
+          - unique
+          - not_null
+
+      - name: customerid
+        description: Identificador único do cliente
+        tests:
+          - unique
+          - not_null
+
+      - name: customerfirstname
+        description: Primeiro nome da pessoa
+        tests:
+          - not_null
+
+      - name: customerlastname
+        description: Sobrenome da pessoa
+        tests:
+          - not_null
+
+      - name: customerfullname
+        description: Nome completo da pessoa
+        tests:
+          - not_null
+      
+      - name: customerpersontype
+        description: Tipo de cliente
+        tests:
+          - not_null
+
+      - name: namestore
+        description: Nome da loja

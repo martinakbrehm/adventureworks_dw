@@ -1,0 +1,160 @@
+version: 2
+
+sources:
+  - name: humanresources
+    description: Dados relacionados a recursos humanos.
+    database: adventureworks_dw
+    schema: humanresources
+    tables:
+      - name: employee
+        description: Informações dos funcionários.
+        columns:
+          - name: businessentityid
+            description: Chave primária para os registros de Funcionário.
+            tests:
+              - unique
+              - not_null
+
+  - name: person
+    description: Dados relacionados a pessoas, como endereços e informações de clientes.
+    database: adventureworks_dw
+    schema: person
+    tables:
+      - name: address
+        description: Informações de endereço de rua para clientes, funcionários e fornecedores.
+        columns:
+          - name: addressid
+            description: Chave primária para os registros de Endereço.
+            tests:
+              - unique
+              - not_null
+      - name: countryregion
+        description: Tabela de consulta contendo os códigos padrão ISO para países e regiões.
+        columns:
+          - name: countryregioncode
+            description: Código padrão ISO para países e regiões.
+            tests:
+              - unique
+              - not_null
+      - name: person
+        description: Informações sobre seres humanos envolvidos com a Adventure Works.
+        columns:
+          - name: businessentityid
+            description: Chave primária para os registros de pessoa.
+            tests:
+              - unique
+              - not_null
+      - name: stateprovince
+        description: Tabela de consulta de Estado e Província.
+        columns:
+          - name: stateprovinceid
+            description: Chave primária para os registros de estado/província.
+            tests:
+              - unique
+              - not_null
+
+  - name: production
+    description: Dados relacionados à produção e categorias de produtos.
+    database: adventureworks_dw
+    schema: production
+    tables:
+      - name: product
+        description: Produtos vendidos.
+        columns:
+          - name: productid
+            description: Chave primária para os registros de produto.
+            tests:
+              - unique
+              - not_null
+      - name: productcategory
+        description: Categoria de Produto.
+        columns:
+          - name: productcategoryid
+            description: Chave primária para os registros de categoria de produto.
+            tests:
+              - unique
+              - not_null
+      - name: productsubcategory
+        description: Subcategoria de Produto.
+        columns:
+          - name: productsubcategoryid
+            description: Chave primária para os registros de subcategoria de produto.
+            tests:
+              - unique
+              - not_null
+
+  - name: sales
+    description: Dados de vendas, pedidos e informações relacionadas.
+    database: adventureworks_dw
+    schema: sales
+    tables:
+      - name: salesorderheader
+        description: Informações gerais do pedido de venda.
+        columns:
+          - name: salesorderid
+            description: Chave primária para os registros de Pedido de Venda.
+            tests:
+              - unique
+              - not_null
+      - name: salesorderdetail
+        description: Produtos associados a um pedido de venda específico.
+        columns:
+          - name: salesorderid
+            description: Chave estrangeira para o salesorderheader.
+            tests:
+              - not_null
+      - name: salesreason
+        description: Tabela de consulta para os motivos de compra dos clientes.
+        columns:
+          - name: salesreasonid
+            description: Chave primária para os registros de motivo de venda.
+            tests:
+              - unique
+              - not_null
+      - name: salesorderheadersalesreason
+        description: Tabela de referência cruzada mapeando pedidos de vendas aos códigos de motivo de vendas.
+        columns:
+          - name: salesorderid
+            description: Chave estrangeira para salesorderheader.salesorderid.
+            tests:
+              - not_null   
+      - name: salesperson
+        description: Informações atuais do representante de vendas.
+        columns:
+          - name: businessentityid
+            description: Chave primária. Chave estrangeira para salesorderheader.salesorderid.
+            tests:
+              - unique
+              - not_null
+      - name: salesterritory
+        description: Tabela de consulta de território de vendas.
+        columns:
+          - name: territoryid
+            description: Chave primária para os registros de salesterritory.
+            tests:
+              - unique
+              - not_null
+      - name: creditcard
+        description: Informações de cartão de crédito do cliente.
+        columns:
+          - name: creditcardid
+            description: Chave primária para os registros de cartão de crédito.
+            tests:
+              - unique
+              - not_null
+      - name: store
+        description: Lojas revendedoras (clientes) dos produtos da Adventure Works
+        columns:
+          - name: businessentityid
+            description: Chave primária
+            tests:
+              - unique
+              - not_null
+      - name: customer
+        description: Informações atuais dos clientes.
+        columns:
+          - name: customerid
+            description: Chave primária.
+            tests:
+              - unique
+              - not_null

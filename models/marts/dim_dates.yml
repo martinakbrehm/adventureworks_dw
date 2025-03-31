@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: dim_dates 
+    description: Este modelo representa a dimensão de datas
+    columns:
+      - name: metric_date
+        description: Registro único de data
+        tests:
+          - not_null
+          - unique
+
+      - name: metric_day
+        description: Dia da data `metric_date`
+        tests:
+          - not_null
+
+      - name: metric_month
+        description: Mês da data `metric_date`
+        tests:
+          - not_null
+
+      - name: metric_year
+        description: Ano da data `metric_date`
+        tests:
+          - not_null
+
+      - name: metric_quarter
+        description: Trimestre da data `metric_date`
+        tests:
+          - not_null
+
+      - name: semester
+        description: Semestre da data `metric_date`
+        tests:
+          - not_null
+
+      - name: dayofweek
+        description: Dia da semana da data `metric_date
+        tests:
+          - not_null
+
+      - name: fullmonth
+        description: Nome completo do mês do respectivo ano.
+        tests:
+          - not_null

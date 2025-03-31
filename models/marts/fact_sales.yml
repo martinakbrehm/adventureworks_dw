@@ -1,0 +1,123 @@
+version: 2
+
+models:
+  - name: factsales 
+    description: Este modelo representa a tabela fato de vendas
+    columns:
+      - name: factsalessk
+        description: A chave substituta da venda
+        tests:
+          - unique
+          - not_null
+
+      - name: salesorderid
+        description: Identificador único do cabeçalho do pedido de venda
+        tests:
+          - not_null
+
+      - name: customerfk
+        description: Identificador único do cliente
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customersk
+
+      - name: locationfk
+        description: Identificador único da localização
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_locations')
+              field: locationsk
+
+      - name: creditcardfk
+        description: Identificador único do cartão de crédito
+        tests:
+          - relationships:
+              to: ref('dim_creditcards')
+              field: creditcardsk
+          
+      - name: reasonfk
+        description: Identificador único do motivo da venda
+        tests:
+          - relationships:
+              to: ref('dim_reasons')
+              field: reasonsk
+
+      - name: productfk
+        description: Identificador único da localização
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_products')
+              field: productsk
+
+      - name: orderdate
+        description: Data em que o pedido de venda foi criado
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_dates')
+              field: metricdate
+
+      - name: shipdate
+        description: Data em que o pedido foi enviado ao cliente
+        tests:
+          - not_null
+
+      - name: statussales
+        description: Status atual do pedido
+        tests:
+          - not_null
+
+      - name: onlineorderflag
+        description: Compra realizada online.
+        tests:
+          - not_null
+
+      - name: subtotal
+        description: Subtotal das vendas
+        tests:
+          - not_null
+
+      - name: taxamt
+        description: Valor do imposto
+        tests:
+          - not_null
+
+      - name: freight
+        description: Custo do frete
+        tests:
+          - not_null
+
+      - name: totaldue
+        description: Total devido pelo cliente. Calculado como Subtotal + TaxAmt + Freight.
+        tests:
+          - not_null
+
+      - name: orderqty
+        description: Quantidade pedida por produto
+        tests:
+          - not_null
+
+      - name: unitprice
+        description: Preço de venda de um único produto
+        tests:
+          - not_null
+
+      - name: unitpricediscount
+        description: Valor do desconto
+        tests:
+          - not_null
+
+      - name: amountpaidproduct
+        description: Valor pago pelo cliente pelo produto. Não inclui taxas, frete e impostos
+        tests:
+          - not_null
+
+      - name: standardcost
+        description: Custo padrão do produto
+
+      - name: listprice
+        description: Preço de venda do produto

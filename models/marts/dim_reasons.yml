@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: dim_reasons 
+    description: Este modelo representa a dimensão de razões
+    columns:
+      - name: reasonsk
+        description: A chave substituta da razão
+        tests:
+          - not_null
+
+      - name: salesorderid
+        description: Identificador único do cabeçalho do pedido de venda
+        tests:
+          - not_null
+      
+      - name: salesreason_name
+        description: Nome da razão da venda
+        tests:
+          - not_null
+
+      - name: reasontype
+        description: Categoria à qual a razão da venda pertence
+        tests:
+          - not_null
+
+      - name: Price
+        description: Coluna para identificar a razão de Preço
+        tests:
+          - not_null
+
+      - name: Manufacturer
+        description: Coluna para identificar a razão de Fabricante
+        tests:
+          - not_null
+
+      - name: Quality
+        description: Coluna para identificar a razão de Qualidade
+        tests:
+          - not_null
+
+      - name: Promotion
+        description: Coluna para identificar a razão de Em Promoção
+        tests:
+          - not_null
+
+      - name: Other
+        description: Coluna para identificar a razão de Outro
+        tests:
+          - not_null          
+
+      - name: Television
+        description: Coluna para identificar a razão de Anúncio de Televisão
+        tests:
+          - not_null

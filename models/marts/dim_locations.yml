@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: dim_locations 
+    description: Este modelo representa a dimensão de localizações
+    columns:
+      - name: locationsk
+        description: Chave substituta da localização
+        tests:
+          - unique
+          - not_null
+
+      - name: addressid
+        description: Identificador único do endereço
+        tests:
+          - unique
+          - not_null
+      
+      - name: city
+        description: Nome da cidade
+        tests:
+          - not_null
+
+      - name: postalcode
+        description: Código postal do endereço
+        tests:
+          - not_null
+
+      - name: stateprovincecode
+        description: Código padrão ISO para estado ou província
+        tests:
+          - not_null
+
+      - name: stateprovince_name
+        description: Nome do estado ou província
+        tests:
+          - not_null
+      
+      - name: territory_name
+        description: Descrição do território de vendas
+        tests:
+          - not_null
+
+      - name: countryregioncode
+        description: Código padrão ISO para países e regiões
+        tests:
+          - not_null
+
+      - name: countryregion_name
+        description: Nome do país ou região
+        tests:
+          - not_null

@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: fact_aggsalessellersregion
+    description: Este modelo representa a tabela agregada de vendas por região e vendedor
+    columns:
+      - name: agg_salesregionpersonsk
+        description: A chave substituta da tabela agregada
+        tests:
+          - unique
+          - not_null
+
+      - name: countryregion_name
+        description: Nome do país ou região
+        tests:
+          - not_null
+
+      - name: jobtitle
+        description: Cargo específico do vendedor
+        tests:
+          - not_null
+
+      - name: gender
+        description: Gênero do funcionário
+        tests:
+          - not_null
+
+      - name: totalsalesorders
+        description: Contagem de vendedores
+        tests:
+          - not_null

@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: dim_creditcards
+    description: Este modelo representa a dimensão de cartões de crédito
+    columns:
+      - name: creditcardsk
+        description: A chave substituta do cartão de crédito
+        tests:
+          - unique
+          - not_null
+
+      - name: creditcardid
+        description: Identificador único do cartão de crédito
+        tests:
+          - unique
+          - not_null
+      
+      - name: cardtype
+        description: Nome do tipo de cartão de crédito
+        tests:
+          - not_null
