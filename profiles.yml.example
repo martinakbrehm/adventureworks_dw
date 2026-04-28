@@ -1,0 +1,29 @@
+# Renomeie para profiles.yml e coloque em ~/.dbt/profiles.yml
+# NUNCA versione o profiles.yml real — ele está no .gitignore.
+
+default:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'TRANSFORMER') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'ADVENTUREWORKS_DW') }}"
+      schema: "{{ env_var('SNOWFLAKE_SCHEMA', 'DBT_TRANSFORMED') }}"
+      threads: 4
+      client_session_keep_alive: false
+
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: TRANSFORMER
+      warehouse: COMPUTE_WH
+      database: ADVENTUREWORKS_DW
+      schema: DBT_TRANSFORMED
+      threads: 8
+      client_session_keep_alive: false

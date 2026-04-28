@@ -1,12 +1,12 @@
-with 
-stg_salesorderheadersalesreason as (
+with
+    stg_salesorderheadersalesreason as (
     select 
         distinct salesorderid,
         salesreasonid
     from {{ ref('stg_salesorderheadersalesreason') }}
 ),
 
-stg_salesreason as (
+    stg_salesreason as (
     select 
         salesreasonid,
         salesreason_name,
@@ -14,7 +14,7 @@ stg_salesreason as (
     from {{ ref('stg_salesreason') }}
 ),
 
-stg_orderreasons as (
+    stg_orderreasons as (
     select
         stg_salesorderheadersalesreason.salesorderid,
         LISTAGG(stg_salesreason.salesreason_name, ' | ') WITHIN GROUP (ORDER BY stg_salesreason.salesreason_name) as salesreasonname, 
@@ -25,7 +25,7 @@ stg_orderreasons as (
     group by stg_salesorderheadersalesreason.salesorderid
 ),
 
-transformed_data as (
+    transformed_data as (
     select
         {{ dbt_utils.generate_surrogate_key(['salesorderid']) }} as reasonsk,
         salesorderid,
@@ -45,13 +45,13 @@ transformed_data as (
             when salesreasonname = 'Manufacturer | Other' then 'Fabricante | Outro'
             else salesreasonname
         end as salesreason_name,       
-        case when salesreasonname like '%Price%' then 1 else 0 end as Price,
-        case when salesreasonname like '%Manufacturer%' then 1 else 0 end as Manufacturer,
-        case when salesreasonname like '%Quality%' then 1 else 0 end as Quality,
-        case when salesreasonname like '%On Promotion%' then 1 else 0 end as Promotion,
-        case when salesreasonname like '%Review%' then 1 else 0 end as Review,
-        case when salesreasonname like '%Other%' then 1 else 0 end as Other,
-        case when salesreasonname like '%Television Advertisement%' then 1 else 0 end as Television
+        case when salesreasonname like '%Price%' then 1 else 0 end           as price,
+        case when salesreasonname like '%Manufacturer%' then 1 else 0 end    as manufacturer,
+        case when salesreasonname like '%Quality%' then 1 else 0 end         as quality,
+        case when salesreasonname like '%On Promotion%' then 1 else 0 end    as promotion,
+        case when salesreasonname like '%Review%' then 1 else 0 end          as review,
+        case when salesreasonname like '%Other%' then 1 else 0 end           as other,
+        case when salesreasonname like '%Television Advertisement%' then 1 else 0 end as television
     from stg_orderreasons
 )
 

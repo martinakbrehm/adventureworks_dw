@@ -1,5 +1,45 @@
-# you shouldn't commit these into source control
-# these are the default directory names, adjust/add to fit your needs
+# ── dbt — artefatos gerados (nunca versionar) ──────────────────────────────────
 target/
 dbt_packages/
 logs/
+
+# ── Credenciais e variáveis de ambiente ────────────────────────────────────────
+# profiles.yml contém usuário, senha e conta do Snowflake — NUNCA versionar.
+# Use profiles.yml.example como template e mantenha o real apenas localmente.
+profiles.yml
+.env
+.env.local
+.env.production
+*.env
+
+# ── Python ─────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# ── IDEs ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Airflow ─────────────────────────────────────────────────────────────────────
+airflow.cfg
+airflow.db
+webserver_config.py
+
+# ── Logs e temporários ─────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
+*.cache

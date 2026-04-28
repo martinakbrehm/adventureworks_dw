@@ -1,7 +1,7 @@
-with 
+with
     stg_orderheader as (
-        select 
-            distinct salesorderid
+        select distinct
+            salesorderid
             , orderdate
             , shipdate
             , statussales
@@ -15,14 +15,14 @@ with
             , taxamt
             , freight
             , totaldue
-        from adventureworks_dw.dbt_transformed.stg_salesorderheader
+        from {{ ref('stg_salesorderheader') }}
     ),
 
     dim_customers as (
         select
             customersk
             , customerid
-        from adventureworks_dw.dbt_transformed.dim_customers
+        from {{ ref('dim_customers') }}
     ),
 
     dim_locations as (
@@ -34,14 +34,14 @@ with
             , stateprovince_name
             , territory_name
             , countryregion_name
-        from adventureworks_dw.dbt_transformed.dim_locations
+        from {{ ref('dim_locations') }}
     ),
 
     dim_creditcards as (
         select
             creditcardsk
             , creditcardid
-        from adventureworks_dw.dbt_transformed.dim_creditcards
+        from {{ ref('dim_creditcards') }}
     ),
 
     dim_reasons as (
@@ -50,14 +50,14 @@ with
             , salesorderid
             , salesreason_name
             , reasontype
-            , Price
-            , Manufacturer
-            , Quality
-            , Promotion
-            , Review
-            , Other
-            , Television
-        from adventureworks_dw.dbt_transformed.dim_reasons
+            , price
+            , manufacturer
+            , quality
+            , promotion
+            , review
+            , other
+            , television
+        from {{ ref('dim_reasons') }}
     ),
 
     join_orderheader as (
@@ -100,22 +100,22 @@ with
             , unitprice
             , unitpricediscount
             , orderqty * (unitprice - unitpricediscount) as amountpaidproduct
-        from adventureworks_dw.dbt_transformed.stg_salesorderdetail
+        from {{ ref('stg_salesorderdetail') }}
     ),
 
     dim_products as (
         select
             productsk
             , productid
-        from adventureworks_dw.dbt_transformed.dim_products
+        from {{ ref('dim_products') }}
     ),
 
     stg_product as (
-        select 
+        select
             productid
             , standardcost
             , listprice
-        from adventureworks_dw.dbt_transformed.stg_product
+        from {{ ref('stg_product') }}
     ),
 
     join_orderdetail as (
@@ -139,7 +139,15 @@ with
 
     transformed_data as (
         select
-            md5(cast(coalesce(cast(join_orderheader.salesorderid as TEXT), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(join_orderheader.customerfk as TEXT), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(join_orderheader.locationfk as TEXT), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(join_orderheader.creditcardfk as TEXT), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(join_orderheader.reasonfk as TEXT), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(join_orderheader.orderdate as TEXT), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(join_orderdetail.productfk as TEXT), '_dbt_utils_surrogate_key_null_') as TEXT)) as factsalessk
+            {{ dbt_utils.generate_surrogate_key([
+                'join_orderheader.salesorderid',
+                'join_orderheader.customerfk',
+                'join_orderheader.locationfk',
+                'join_orderheader.creditcardfk',
+                'join_orderheader.reasonfk',
+                'join_orderheader.orderdate',
+                'join_orderdetail.productfk'
+            ]) }} as factsalessk
             , join_orderheader.salesorderid
             , join_orderheader.customerfk
             , join_orderheader.locationfk
@@ -167,13 +175,13 @@ with
             , dim_locations.countryregion_name
             , dim_reasons.salesreason_name
             , dim_reasons.reasontype
-            , dim_reasons.Price
-            , dim_reasons.Manufacturer
-            , dim_reasons.Quality
-            , dim_reasons.Promotion
-            , dim_reasons.Review
-            , dim_reasons.Other
-            , dim_reasons.Television
+            , dim_reasons.price
+            , dim_reasons.manufacturer
+            , dim_reasons.quality
+            , dim_reasons.promotion
+            , dim_reasons.review
+            , dim_reasons.other
+            , dim_reasons.television
         from join_orderdetail
         left join join_orderheader
             on join_orderdetail.salesorderid = join_orderheader.salesorderid
@@ -181,7 +189,6 @@ with
             on join_orderheader.billtoaddressid = dim_locations.addressid
         left join dim_reasons
             on join_orderheader.salesorderid = dim_reasons.salesorderid
-        order by factsalessk
     )
 
 select *

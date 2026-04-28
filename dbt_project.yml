@@ -43,9 +43,14 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 models:
   adventureworks_dw:
-    # Applies to all files under models/example/
     staging:
       +materialized: view
+      +tags: ["staging"]
+      +docs:
+        show: true
     marts:
       +materialized: table
+      +tags: ["marts"]
+      +docs:
+        show: true
 

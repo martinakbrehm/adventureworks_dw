@@ -24,32 +24,37 @@ models:
         tests:
           - not_null
 
-      - name: Price
+      - name: price
         description: Coluna para identificar a razão de Preço
         tests:
           - not_null
 
-      - name: Manufacturer
+      - name: manufacturer
         description: Coluna para identificar a razão de Fabricante
         tests:
           - not_null
 
-      - name: Quality
+      - name: quality
         description: Coluna para identificar a razão de Qualidade
         tests:
           - not_null
 
-      - name: Promotion
+      - name: promotion
         description: Coluna para identificar a razão de Em Promoção
         tests:
           - not_null
 
-      - name: Other
+      - name: review
+        description: Coluna para identificar a razão de Análise
+        tests:
+          - not_null
+
+      - name: other
         description: Coluna para identificar a razão de Outro
         tests:
-          - not_null          
+          - not_null
 
-      - name: Television
+      - name: television
         description: Coluna para identificar a razão de Anúncio de Televisão
         tests:
           - not_null
