@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import PythonOperator
 
 from cosmos import DbtDag, DbtTaskGroup, ProjectConfig, ProfileConfig, RenderConfig
 from cosmos.profiles import SnowflakeUserPasswordProfileMapping  # troque pelo seu adapter
@@ -97,6 +98,73 @@ with DAG(
     )
 
     # ------------------------------------------------------------------
+    # Camada ML — Previsão de Demanda
+    # ------------------------------------------------------------------
+    def run_demand_forecast(**context):
+        """
+        Executa o pipeline de previsão de demanda após a camada Marts.
+        Lê dados do Snowflake via fact_sales e persiste artefatos no
+        diretório ml/artifacts/.
+
+        Para rodar em modo desenvolvimento sem Snowflake:
+            altere source='synthetic' abaixo.
+        """
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "ml"))
+        from demand_forecast import DemandForecastPipeline
+
+        # Lê credenciais do Snowflake a partir de variáveis de ambiente.
+        # Configure no Airflow UI: Admin → Variables ou Connections.
+        snowflake_params = {
+            "user":       os.getenv("SNOWFLAKE_USER"),
+            "password":   os.getenv("SNOWFLAKE_PASSWORD"),
+            "account":    os.getenv("SNOWFLAKE_ACCOUNT"),
+            "warehouse":  os.getenv("SNOWFLAKE_WAREHOUSE", "COMPUTE_WH"),
+            "database":   os.getenv("SNOWFLAKE_DATABASE", "adventureworks_dw"),
+            "schema":     os.getenv("SNOWFLAKE_SCHEMA", "dbt_transformed"),
+        }
+
+        # Usa 'synthetic' se as credenciais não estiverem definidas (CI/CD)
+        source = "snowflake" if all(snowflake_params.values()) else "synthetic"
+
+        pipeline = DemandForecastPipeline(
+            source=source,
+            snowflake_conn_params=snowflake_params if source == "snowflake" else {},
+            forecast_horizon=6,
+            save=True,
+        )
+        result = pipeline.run()
+
+        # Disponibiliza métricas no XCom para monitoramento
+        context["ti"].xcom_push(
+            key="champion_model",
+            value=result.champion_model_name,
+        )
+        context["ti"].xcom_push(
+            key="metrics",
+            value=result.metrics_df.to_dict(orient="records"),
+        )
+
+    demand_forecast = PythonOperator(
+        task_id="demand_forecast_ml",
+        python_callable=run_demand_forecast,
+        provide_context=True,
+        doc_md="""
+        ## Previsão de Demanda — ML
+        Treina e avalia múltiplos modelos de regressão (LinearRegression,
+        Ridge, RandomForest, GradientBoosting) sobre as vendas mensais
+        agregadas do *fact_sales*, usando walk-forward cross-validation.
+
+        **Saídas salvas em** `ml/artifacts/`:
+        - `champion_model.pkl` — modelo serializado
+        - `model_metrics.csv` — comparativo de métricas (MAE, RMSE, MAPE, R²)
+        - `forecast.csv` — previsão dos próximos 6 meses
+        - `feature_importance.csv` — importância das features (modelos tree-based)
+        """,
+    )
+
+    # ------------------------------------------------------------------
     # Dependências
     # ------------------------------------------------------------------
-    start >> staging >> marts >> end
+    start >> staging >> marts >> demand_forecast >> end

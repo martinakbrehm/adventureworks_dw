@@ -5,12 +5,13 @@
   <img src="https://img.shields.io/badge/dbt-FF694B?style=for-the-badge&logo=dbt&logoColor=white"/>
   <img src="https://img.shields.io/badge/Apache%20Airflow-017CEE?style=for-the-badge&logo=apacheairflow&logoColor=white"/>
   <img src="https://img.shields.io/badge/Plotly%20Dash-3F4F75?style=for-the-badge&logo=plotly&logoColor=white"/>
+  <img src="https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white"/>
   <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
 </p>
 
 <p align="center">
   <strong>Data Warehouse moderno sobre o dataset AdventureWorks, construído com as melhores práticas do Modern Data Stack.</strong><br/>
-  Snowflake · dbt Cloud · Apache Airflow + Astronomer Cosmos · Plotly Dash
+  Snowflake · dbt Cloud · Apache Airflow + Astronomer Cosmos · Plotly Dash · scikit-learn ML
 </p>
 
 ---
@@ -29,6 +30,7 @@
 10. [Como Executar](#10-como-executar)
 11. [Testes e Qualidade de Dados](#11-testes-e-qualidade-de-dados)
 12. [Boas Práticas](#12-boas-práticas)
+13. [Machine Learning — Previsão de Demanda](#13-machine-learning--previsão-de-demanda)
 
 ---
 
@@ -44,6 +46,7 @@ O pipeline cobre todo o ciclo de vida dos dados, da fonte à visualização:
 | Transformação | **dbt Cloud** | SQL analítico versionado, testado e documentado |
 | Orquestração | **Apache Airflow + Astronomer Cosmos** | Agendamento e monitoramento do pipeline |
 | Visualização | **Plotly Dash** | Dashboard interativo com tema profissional escuro |
+| Machine Learning | **scikit-learn** | Previsão de demanda mensal com walk-forward CV |
 
 O dataset cobre **maio/2011 a junho/2014**, com mais de **31 mil pedidos de venda**, **19 mil clientes únicos** e receita total superando **US$ 109 milhões**.
 
@@ -99,7 +102,8 @@ flowchart TD
         A1["DAG: adventureworks_dw\nschedule: 0 6 * * *"]
         A2["TaskGroup: staging\n18 tasks paralelas"]
         A3["TaskGroup: marts\ndims paralelas → facts sequenciais"]
-        A1 --> A2 --> A3
+        A4["PythonOperator: demand_forecast_ml\nML · previsão de demanda"]
+        A1 --> A2 --> A3 --> A4
     end
 
     subgraph CONSUME["📊  CONSUMO ANALÍTICO"]
@@ -108,10 +112,20 @@ flowchart TD
         C3["Notebooks\nAnálises ad-hoc"]
     end
 
+    subgraph ML["🤖  scikit-learn  —  Machine Learning"]
+        ML1["Engenharia de Features\nlags · rolling stats · sazonalidade"]
+        ML2["Walk-forward CV\nLinearRegression · Ridge\nRandomForest · GradientBoosting"]
+        ML3["Modelo Campeão\nchampion_model.pkl"]
+        ML4["Previsão Futura\nforecast.csv · model_metrics.csv"]
+        ML1 --> ML2 --> ML3 --> ML4
+    end
+
     SOURCES -->|"Extract + Load"| RAW
     DBT -.->|"dbt run / dbt test"| SNOWFLAKE
     AIRFLOW -.->|"orquestra o dbt"| DBT
     MARTS -->|"SELECT"| CONSUME
+    MARTS -->|"fact_sales agregado"| ML
+    ML -->|"previsões"| CONSUME
 
     style SOURCES fill:#1a1a2e,stroke:#7c3aed,color:#e2e8f0
     style SNOWFLAKE fill:#0d1b3e,stroke:#29B5E8,color:#e2e8f0
@@ -120,6 +134,7 @@ flowchart TD
     style MARTS fill:#0f2040,stroke:#10b981,color:#94a3b8
     style DBT fill:#2d1000,stroke:#FF694B,color:#e2e8f0
     style AIRFLOW fill:#001a40,stroke:#017CEE,color:#e2e8f0
+    style ML fill:#1a0a2e,stroke:#7c3aed,color:#e2e8f0
     style CONSUME fill:#1a2e1a,stroke:#10b981,color:#e2e8f0
 ```
 
@@ -256,13 +271,24 @@ flowchart LR
         f2["fact_aggsalessellersregion"]
     end
 
-    FACTS --> END(["⏹ end"])
+    FACTS --> ML_TASK
+
+    subgraph ML_TASK["PythonOperator: demand_forecast_ml"]
+        ml1["Carrega fact_sales\nagregado por mês"]
+        ml2["Engenharia de Features\n+ Walk-forward CV"]
+        ml3["Seleciona modelo campeão\nSalva artefatos em ml/artifacts/"]
+        ml4["XCom: champion_model\nXCom: metrics"]
+        ml1 --> ml2 --> ml3 --> ml4
+    end
+
+    ML_TASK --> END(["⏹ end"])
 
     style START fill:#10b981,stroke:#10b981,color:#000
     style END fill:#10b981,stroke:#10b981,color:#000
     style STG fill:#001a40,stroke:#017CEE,color:#e2e8f0
     style DIMS fill:#001a40,stroke:#06b6d4,color:#e2e8f0
     style FACTS fill:#2d0a00,stroke:#FF694B,color:#e2e8f0
+    style ML_TASK fill:#1a0a2e,stroke:#7c3aed,color:#e2e8f0
 ```
 
 **Configuração:** `schedule_interval="0 6 * * *"` · `retries=1` · `retry_delay=5min` · `catchup=False`
@@ -466,6 +492,12 @@ adventureworks_dw/
 │   ├── data_loader.py             ← Conector Snowflake + fallback
 │   └── requirements.txt
 │
+├── ml/
+│   ├── demand_forecast.py         ← Pipeline ML de previsão de demanda
+│   ├── test_demand_forecast.py    ← Suite de testes pytest (~35 casos)
+│   ├── requirements.txt           ← Dependências ML
+│   └── artifacts/                 ← Gerado na execução (model.pkl, CSVs)
+│
 └── macros/ · analyses/ · seeds/ · snapshots/ · tests/
 ```
 
@@ -498,6 +530,11 @@ dbt docs generate && dbt docs serve   # http://localhost:8080
 # 7. Dashboard
 cd dashboard && pip install -r requirements.txt
 python app.py   # http://localhost:8050
+
+# 8. Machine Learning — Previsão de Demanda
+pip install -r ml/requirements.txt
+python ml/demand_forecast.py          # executa standalone com dados sintéticos
+pytest ml/test_demand_forecast.py -v  # roda a suite de testes
 ```
 
 ---
@@ -524,6 +561,100 @@ Execução automática: `dbt test` — integrado ao Airflow via `dbt build`.
 - **Staging sem joins** — limpeza pura; lógica de negócio exclusivamente nos marts
 - **Credenciais via ENV** — `profiles.yml` e `.env` no `.gitignore`, nunca versionados
 - **Tags por camada** — `tag:staging` · `tag:marts` para seleção granular no Airflow e dbt
+- **ML desacoplado do dbt** — etapa Python independente, acionada após `marts` via `PythonOperator`
+- **Artefatos versionáveis** — `champion_model.pkl` e CSVs persistidos em `ml/artifacts/`
+
+---
+
+## 13. Machine Learning — Previsão de Demanda
+
+Após a camada Marts, o pipeline inclui uma etapa de **Machine Learning** para prever a receita mensal futura com base no histórico de vendas.
+
+### Arquitetura do Pipeline
+
+```
+fact_sales (Snowflake)
+    │
+    ├── Agregação mensal (ORDER, REVENUE, QTY, CUSTOMERS)
+    │
+    ├── Engenharia de Features
+    │       ├── Features temporais (mês, trimestre, componentes sen/cos)
+    │       ├── Features de lag (lag 1, 2, 3, 6, 12 meses)
+    │       └── Rolling statistics (média e desvio  rolling 3M e 6M)
+    │
+    ├── Walk-forward Cross-Validation (5 folds)
+    │
+    ├── Treinamento dos Modelos Candidatos
+    │       ├── LinearRegression (baseline)
+    │       ├── Ridge
+    │       ├── RandomForest
+    │       └── GradientBoosting
+    │
+    ├── Seleção do Modelo Campão (menor MAE no holdout)
+    │
+    ├── Previsão Recursiva (6 meses futuros)
+    │
+    └── Artefatos Persistidos em ml/artifacts/
+            ├── champion_model.pkl
+            ├── model_metrics.csv
+            ├── forecast.csv
+            └── feature_importance.csv
+```
+
+### Métricas de Desempenho
+
+| Métrica | Descrição |
+|---|---|
+| **MAE** | Erro absoluto médio — unidade original (US$) |
+| **RMSE** | Raiz do erro quadrático médio — penaliza outliers |
+| **MAPE** | Erro percentual absoluto médio — interpretabilidade de negócio |
+| **R²** | Coeficiente de determinação — variância explicada pelo modelo |
+| **CV MAE médio** | MAE médio dos folds walk-forward — estimativa de generalização |
+| **CV MAE desvio** | Desvio padrão do MAE por fold — estabilidade do modelo |
+
+### Testes Unitários
+
+A suite de testes em `ml/test_demand_forecast.py` cobre **9 classes**, **~35 casos de teste**:
+
+| Classe de Teste | O que valida |
+|---|---|
+| `TestSyntheticData` | Forma, tipos, reprodutibilidade e positividade dos dados |
+| `TestFeatureEngineering` | Features temporais, lags, rolling stats, alinhamento X/y |
+| `TestMetrics` | MAPE, MAE, RMSE, R² — inclui casos extremos (zeros, perfeito) |
+| `TestCandidateModels` | Existência, tipo Pipeline, fit/predict sem erros |
+| `TestWalkForwardCV` | Número de folds, positividade, composição dos scores |
+| `TestFeatureImportance` | Retorno correto para árvores, None para modelos lineares |
+| `TestFutureForecast` | Horizonte, colunas, não-negatividade, datas sequenciais |
+| `TestArtifacts` | Gravação e leitura de artefatos, FileNotFoundError |
+| `TestEndToEndPipeline` | Pipeline completo: estrutura, métricas, forecast, artefatos |
+
+```bash
+# Execução
+pytest ml/test_demand_forecast.py -v
+
+# Com cobertura
+pytest ml/test_demand_forecast.py -v --cov=ml --cov-report=term-missing
+```
+
+### Integração com Airflow
+
+A etapa `demand_forecast_ml` é adicionada ao DAG após `marts`:
+
+```
+start → staging → marts → demand_forecast_ml → end
+```
+
+As métricas do modelo campão são publicadas via **XCom** para monitoramento externo.
+
+### Estrutura de Arquivos
+
+```
+ml/
+├── demand_forecast.py      # Pipeline principal (dados, features, modelos, artefatos)
+├── test_demand_forecast.py # Suite completa de testes (pytest)
+├── requirements.txt        # Dependências da camada ML
+└── artifacts/              # Gerado na execução (model.pkl, CSVs)
+```
 
 ---
 
